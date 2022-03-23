@@ -10,6 +10,7 @@
 
 
 library("tidyverse")
+library("dplyr")
 library("ggplot2")
 library("car") # For Anova
 library("aod") # for wald.test
@@ -42,7 +43,7 @@ if (Sys.info()[1] == "Windows") {
 # 1. resp: The number of victims the respondent knows
 # 2. race: The race of the respondent (black or white)
 data <- read.csv("homicide.csv", header = TRUE, stringsAsFactors = TRUE)
-data <- data %>% select(c(resp, race))
+data <- data %>% dplyr::select(c(resp, race))
 # Exploratory
 summary(data)
 mean(data$resp) # 0.144
@@ -51,6 +52,8 @@ ggplot(data=data, aes(x=resp)) + geom_histogram(binwidth=1)
 ggplot(data, aes(x=resp, fill=race)) + geom_bar(position='dodge', stat='count')
 # counts for each race by number of known homicides
 (tab <- table(data$resp, data$race))
+table(data)
+round(prop.table(tab), 3)
 #data[which(data$race=="black"),]
 #data[which(data$race=="white"),]
 #data$resp <- as.factor(data$resp)
@@ -115,7 +118,7 @@ wald.test(Sigma=vcov(poisFit), b=coef(poisFit), Terms = 1:2)
 #      Goodness of fit test If the residual deviance is close enough to the 
 #      residual degrees of freedom, it is a good fit. It can be tested by 
 #      Chi-squared test.
-list(residual.deviance           = deviance(poisFit),
+cbind(residual.deviance           = deviance(poisFit),
      residual.degrees.of.freedom = df.residual(poisFit),
      chisq.p.value               = pchisq(deviance(poisFit), df.residual(poisFit), lower = F)
 )
@@ -128,6 +131,11 @@ nbFit <- glm.nb(resp ~ race, data = data)
 summary(nbFit)
 
 # 7. Fit a Quasi-likelihood model
+
+QLM <-glm(resp ~ race, data = data, family =quasipoisson)
+summary(QLM)
+
+
 
 
 
