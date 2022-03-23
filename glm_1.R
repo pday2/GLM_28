@@ -129,9 +129,8 @@ summary(nbFit)
 
 # 7. Fit a Quasi-likelihood model
 
-
-
-
+QLM <-glm(resp ~ race, data = data, family =quasipoisson)
+summary(QLM)
 
 
 
