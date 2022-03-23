@@ -134,18 +134,10 @@ summary(nbFit)
 
 QLM <-glm(resp ~ race, data = data, family =quasipoisson)
 summary(QLM)
-<<<<<<< HEAD
 
 
 
-
-
-
-=======
->>>>>>> e5270abd3e2f44e739a59e2599c37dd01d2fb2b7
-
-
-
+# Don;t know that we need this
 library(DHARMa)
 # citation("DHARMa")
 # https://cran.microsoft.com/web/packages/DHARMa/vignettes/DHARMa.html
