@@ -33,13 +33,22 @@ glm.RR <- function(GLM.RESULT, digits = 3) {
   TABLE.EXP
 }
 
+hosmerlem = function(y, yhat, g=10) {
+  fcutyhat = cut(yhat,breaks = quantile(yhat, probs=seq(0,1, 1/g)), include.lowest=TRUE)
+  obs = xtabs(cbind(1 - y, y) ~ cutyhat)
+  expect = xtabs(cbind(1 - yhat, yhat) ~ cutyhat)
+  chisq = sum((obs - expect)^2/expect)
+  P = 1 - pchisq(chisq, g - 2)
+  return(list(chisq=chisq,p.value=P))
+}
+
 # Change your setwd
-#if (Sys.info()[1] == "Windows") {
-#  setwd("C:/Users/peter/My Tresors/Documentsacer/KULeuven/GLM/Project")
-#} else {
-#  setwd("/home/muddy/Tresors/Documentsacer/KULeuven/GLM/Project")   
-#}
-setwd("C:/Workdir/GLM/GLM_28")
+if (Sys.info()[1] == "Windows") {
+ setwd("C:/Users/peter/My Tresors/Documentsacer/KULeuven/GLM/Project")
+} else {
+ setwd("/home/muddy/Tresors/Documentsacer/KULeuven/GLM/Project")
+}
+# setwd("C:/Workdir/GLM/GLM_28")
 # 1. resp: The number of victims the respondent knows
 # 2. race: The race of the respondent (black or white)
 data <- read.csv("homicide.csv", header = TRUE, stringsAsFactors = TRUE)
@@ -95,11 +104,14 @@ X2=sum(residuals(poisFit, type = "pearson")^2)
 n=dim(data)[1]
 p=length(coef(poisFit))
 data.frame(X2s=X2,pvalue=(1-pchisq(X2,n-p))) #p-value not good
+# X2 = 2279, pval = 0 - large lack of fit, model not good
 
 # Deviance tests
 Dev=summary(poisFit)$deviance
 df=summary(poisFit)$df.residual
 data.frame(Dev=Dev, df=df, pvalue=(1-pchisq(Dev,df))) #P-value good, deviation is relatively close to df
+# dev=844 < df=1306, p-value=1 => FtR H0 model is good fit???? hmmmmm
+
 
 # Likelihood Ratio Test
 Anova(poisFit, test="LR", type=3) #Looks good, significant difference between races
@@ -108,12 +120,21 @@ Anova(poisFit, test="LR", type=3) #Looks good, significant difference between ra
 Anova(poisFit, test="Wald", type=3) #Looks good
 # or
 wald.test(Sigma=vcov(poisFit), b=coef(poisFit), Terms = 1:2)
+# p-value < 0.001 => evidence for association between race and resp, good fit
+
+
 
 #Residuals diagnostics
 sim.pois <- simulateResiduals(poisFit,plot=T)
 hist(sim.pois)
 testUniformity(sim.pois)
 testDispersion(sim.pois) #Overdispersion issue
+
+# Hosmer-Lemeshow test
+# HLPois <- hosmerlem(y=data$resp, yhat=fitted(poisFit), g=10)
+# HL test returns error for all g except g=1 which results in other errors
+# Error in cut.default(yhat, breaks = quantile(yhat, probs = seq(0, 1, 1/g)),
+#   : 'breaks' are not unique 
 
 # 6. Fit a negative binomial model and get estimated model based variances
 #    (per race) for the counts. Compare them with the observed 
@@ -127,8 +148,38 @@ QLM <-glm(resp ~ race, data = data, family =quasipoisson)
 summary(QLM)
 
 
+# 8. Conclusion
+AIC(poisFit) # 1121
+AIC(nbFit) # 1001 - nb better than pois
+AIC(QLM) # fails because q-l does not have a likelihood
+logLik(poisFit) # -558
+logLik(nbFit) # -497 again nb better than pois
+logLik(QLM) # fails because q-l does not have a likelihood
+summPois <- summary(poisFit)
+summNB <- summary(nbFit)
+summQLM <- summary(QLM)
+# phi - scale or estimate of phi
+summPois$dispersion
+summNB$dispersion
+summQLM$dispersion
+# deviance(fit): Returns the residual deviance D(y, μ̂) for the fitted glm
+# deviance closer to 0 is better
+deviance(poisFit)
+deviance(nbFit)
+deviance(QLM)
+anova(poisFit, test="Chisq")
+Anova(poisFit, nbFit)
 
-# Don;t know that we need this
+# Just want to check Zero Inflated Poisson since there are many 0 reponses
+zip <- zeroinfl(resp ~ race | race, data = data)
+summary(zip)
+zinb <- zeroinfl(resp ~ race | race, data = data, dist = "negbin")
+summary(zinb)
+AIC(zip) # 998.7 just slightly better than NegBin at 1001.8
+AIC(zinb) # 999.0
+
+
+# Don;t know that we need this. 
 library(DHARMa)
 # citation("DHARMa")
 # https://cran.microsoft.com/web/packages/DHARMa/vignettes/DHARMa.html
