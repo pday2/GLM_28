@@ -139,8 +139,24 @@ testDispersion(sim.pois) #Overdispersion issue
 # 6. Fit a negative binomial model and get estimated model based variances
 #    (per race) for the counts. Compare them with the observed 
 
-nbFit <- glm.nb(resp ~ race, data = data)
+# Fit NB model
+nbFit <- glm.nb(resp ~ race, data )
 summary(nbFit)
+nbFit$coefficients #less effect for racewhite
+nbFit$theta
+
+# Model based variances
+var_black_nb <- exp(nbFit$coefficients[1]) + (1/nbFit$theta)*exp(nbFit$coefficients[1])^2
+var_white_nb <- exp(nbFit$coefficients[1] + nbFit$coefficients[2]) +(1/nbFit$theta)*exp(nbFit$coefficients[1] + nbFit$coefficients[2])^2
+
+# Observed variances
+var_black_obs <- var(data[which(data$race == "black"),1])
+var_white_obs <- var(data[which(data$race == "white"),1])
+
+# comparing the variances
+results = data.frame(Race = c("black","white"), NB_Variance = c(var_black_nb,var_white_nb), Obs_Variance = c(var_black_obs,var_white_obs) )
+print(results)
+
 
 # 7. Fit a Quasi-likelihood model
 
