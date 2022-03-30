@@ -57,6 +57,8 @@ data <- read.csv("homicide.csv", header = TRUE, stringsAsFactors = TRUE)
 data <- data %>% dplyr::select(c(resp, race))
 # Exploratory
 summary(data)
+mean(data[which(data$race=="black"),][[1]]) # 0.5220126
+mean(data[which(data$race=="white"),][[1]]) # 0.09225413
 mean(data$resp) # 0.144
 var(data$resp) # 0.295 - Overdispersion may be an issue as Var(y) > E(y)
 ggplot(data=data, aes(x=resp)) + geom_histogram(binwidth=1) 
