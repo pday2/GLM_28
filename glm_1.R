@@ -174,8 +174,14 @@ llp <- logLik(poisFit) # -558
 lln <- logLik(nbFit) # -497 again nb better than pois
 llq <- logLik(QLM) # fails because q-l does not have a likelihood
 X2p <- sum(residuals(poisFit, type = "pearson")^2)
+p=length(coef(poisFit))
+data.frame(X2s=X2p,pvalue=(1-pchisq(X2p,n-p)))
 X2n <- sum(residuals(nbFit, type = "pearson")^2)
+p=length(coef(poisFit))
+data.frame(X2s=X2n,pvalue=(1-pchisq(X2n,n-p)))
 X2q <- sum(residuals(QLM, type = "pearson")^2)
+p=length(coef(poisFit))
+data.frame(X2s=X2q,pvalue=(1-pchisq(X2q,n-p)))
 summPois <- summary(poisFit)
 summNB <- summary(nbFit)
 summQLM <- summary(QLM)
@@ -189,10 +195,10 @@ devp <- deviance(poisFit)
 devn <- deviance(nbFit)
 devq <- deviance(QLM)
 
-tab <- matrix(c(aicp, aicn, aicq,
+tab <- matrix(round(c(aicp, aicn, aicq,
                 llp, lln, llq, 
                 devp, devn, devq,
-                X2p, X2n, X2q), ncol = 4, byrow = FALSE)
+                X2p, X2n, X2q), 3), ncol = 4, byrow = FALSE)
 colnames(tab) <- c('AIC','logLike','dev', 'Chi2')
 rownames(tab) <- c('Poisson','NegBin','QLM')
 tab <- as.table(tab)
