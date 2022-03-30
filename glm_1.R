@@ -8,6 +8,13 @@
 # Kylan Young r0711789
 # Martha Efeti Tondo r0886202
 
+# Change your setwd
+# if (Sys.info()[1] == "Windows") {
+#   setwd("C:/Users/peter/My Tresors/Documentsacer/KULeuven/GLM/Project")
+# } else {
+#   setwd("/home/muddy/Tresors/Documentsacer/KULeuven/GLM/Project")
+# }
+setwd("C:/Workdir/GLM/GLM_28")
 
 library("tidyverse")
 library("dplyr")
@@ -16,6 +23,7 @@ library("car") # For Anova
 library("aod") # for wald.test
 library("MASS") # for glm.nb - negative binomial GLM
 library("DHARMa") #simulateResiduals
+library("pscl") # for zeroinfl model
 # glm.RR from https://rpubs.com/kaz_yos/poisson
 glm.RR <- function(GLM.RESULT, digits = 3) {
   if (GLM.RESULT$family$family == "binomial") {
@@ -42,13 +50,7 @@ hosmerlem = function(y, yhat, g=10) {
   return(list(chisq=chisq,p.value=P))
 }
 
-# Change your setwd
-if (Sys.info()[1] == "Windows") {
- setwd("C:/Users/peter/My Tresors/Documentsacer/KULeuven/GLM/Project")
-} else {
- setwd("/home/muddy/Tresors/Documentsacer/KULeuven/GLM/Project")
-}
-# setwd("C:/Workdir/GLM/GLM_28")
+
 # 1. resp: The number of victims the respondent knows
 # 2. race: The race of the respondent (black or white)
 data <- read.csv("homicide.csv", header = TRUE, stringsAsFactors = TRUE)
@@ -165,12 +167,15 @@ summary(QLM)
 
 
 # 8. Conclusion
-AIC(poisFit) # 1121
-AIC(nbFit) # 1001 - nb better than pois
-AIC(QLM) # fails because q-l does not have a likelihood
-logLik(poisFit) # -558
-logLik(nbFit) # -497 again nb better than pois
-logLik(QLM) # fails because q-l does not have a likelihood
+aicp <- AIC(poisFit) # 1121
+aicn <- AIC(nbFit) # 1001 - nb better than pois
+aicq <- AIC(QLM) # fails because q-l does not have a likelihood
+llp <- logLik(poisFit) # -558
+lln <- logLik(nbFit) # -497 again nb better than pois
+llq <- logLik(QLM) # fails because q-l does not have a likelihood
+X2p <- sum(residuals(poisFit, type = "pearson")^2)
+X2n <- sum(residuals(nbFit, type = "pearson")^2)
+X2q <- sum(residuals(QLM, type = "pearson")^2)
 summPois <- summary(poisFit)
 summNB <- summary(nbFit)
 summQLM <- summary(QLM)
@@ -180,28 +185,26 @@ summNB$dispersion
 summQLM$dispersion
 # deviance(fit): Returns the residual deviance D(y, μ̂) for the fitted glm
 # deviance closer to 0 is better
-deviance(poisFit)
-deviance(nbFit)
-deviance(QLM)
-anova(poisFit, test="Chisq")
-Anova(poisFit, nbFit)
+devp <- deviance(poisFit)
+devn <- deviance(nbFit)
+devq <- deviance(QLM)
 
-# Just want to check Zero Inflated Poisson since there are many 0 reponses
+tab <- matrix(c(aicp, aicn, aicq,
+                llp, lln, llq, 
+                devp, devn, devq,
+                X2p, X2n, X2q), ncol = 4, byrow = FALSE)
+colnames(tab) <- c('AIC','logLike','dev', 'Chi2')
+rownames(tab) <- c('Poisson','NegBin','QLM')
+tab <- as.table(tab)
+tab
+
+
+# Just want to check Zero Inflated Poisson since there are many 0 responses
 zip <- zeroinfl(resp ~ race | race, data = data)
 summary(zip)
 zinb <- zeroinfl(resp ~ race | race, data = data, dist = "negbin")
 summary(zinb)
-AIC(zip) # 998.7 just slightly better than NegBin at 1001.8
-AIC(zinb) # 999.0
+aiczip <- AIC(zip) # 998.7 only just slightly better than NegBin at 1001.8
+aiczin <- AIC(zinb) # 999.0
 
 
-# Don;t know that we need this. 
-library(DHARMa)
-# citation("DHARMa")
-# https://cran.microsoft.com/web/packages/DHARMa/vignettes/DHARMa.html
-
-
-# glm.nb in library("MASS")
-
-
-library("pscl") # for zeroinfl model
