@@ -57,8 +57,10 @@ data <- read.csv("homicide.csv", header = TRUE, stringsAsFactors = TRUE)
 data <- data %>% dplyr::select(c(resp, race))
 # Exploratory
 summary(data)
-mean(data[which(data$race=="black"),][[1]]) # 0.5220126
-mean(data[which(data$race=="white"),][[1]]) # 0.09225413
+MRblack <- mean(data[which(data$race=="black"),][[1]]) # 0.5220126
+MRblack
+MRwhite <- mean(data[which(data$race=="white"),][[1]]) # 0.09225413
+MRwhite
 mean(data$resp) # 0.144
 var(data$resp) # 0.295 - Overdispersion may be an issue as Var(y) > E(y)
 ggplot(data=data, aes(x=resp)) + geom_histogram(binwidth=1) 
@@ -90,10 +92,8 @@ round(exp(cbind(RR=poisFit$coefficients, confint(poisFit))), 3)
 glm.RR(poisFit)
 # 3. Calculate the ratio of the means of the response for each race
 #   (mean response for black/mean response for white)
-mrwhite <- mean(predict.glm(poisFit, data[which(data$race=="white"),]))
-mrblack <- mean(predict.glm(poisFit, data[which(data$race=="black"),]))
-ratioBW <- mrblack/mrwhite
-ratioBW #ratio = 0.27
+ratioBW <- MRblack/MRwhite
+ratioBW #ratio = 5.65
 
 # 4. Calculate the predictions of the models for each rate (or race???)
 # Predict case per person (n = 1) 
