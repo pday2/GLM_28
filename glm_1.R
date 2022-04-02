@@ -149,6 +149,9 @@ summary(nbFit)
 nbFit$coefficients #less effect for racewhite
 nbFit$theta
 
+# Wald Test
+Anova(nbFit, test="Wald", type=3)
+
 # Model based variances
 var_black_nb <- exp(nbFit$coefficients[1]) + (1/nbFit$theta)*exp(nbFit$coefficients[1])^2
 var_white_nb <- exp(nbFit$coefficients[1] + nbFit$coefficients[2]) +(1/nbFit$theta)*exp(nbFit$coefficients[1] + nbFit$coefficients[2])^2
