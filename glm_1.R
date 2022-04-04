@@ -170,6 +170,8 @@ print(results)
 QLM <-glm(resp ~ race, data = data, family =quasipoisson)
 summary(QLM)
 
+# QLM Wald Test
+Anova(QLM, test="Wald", type=3)
 
 # 8. Conclusion
 aicp <- AIC(poisFit) # 1121
